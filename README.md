@@ -157,7 +157,7 @@ Aurora est actuellement en développement.
 
 * [ ] Améliorer la gestion des erreurs
 * [ ] Ajouter un système de compression
-* [ ] Ajouter un système de chiffrement
+* [ ] Ajouter un système de chiffrement (prévu le 31 octobre 2026)
 * [ ] Définir davantage le format Aurora
 * [ ] Améliorer les performances pour les gros fichiers
 * [ ] Optimiser le stockage des données
