@@ -1,0 +1,133 @@
+name: Build Aurora 1.0
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    name: Build ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            name: Windows
+
+          - os: ubuntu-latest
+            name: Linux
+
+          - os: macos-latest
+            name: macOS
+
+    steps:
+      - name: Télécharger le code
+        uses: actions/checkout@v4
+
+      - name: Installer Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Installer les dépendances
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then
+            python -m pip install -r requirements.txt
+          fi
+          python -m pip install pyinstaller --upgrade
+
+      - name: Compiler le générateur
+        shell: bash
+        run: |
+          pyinstaller \
+            --clean \
+            --onefile \
+            --windowed \
+            --name generateurAurora1.0 \
+            generateurAurora1.0.py
+
+      - name: Compiler le lecteur
+        shell: bash
+        run: |
+          pyinstaller \
+            --clean \
+            --onefile \
+            --windowed \
+            --name lecteurAurora1.0 \
+            lecteurAurora1.0.py
+
+      - name: Préparer Windows
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          mkdir -p release
+          cp "dist/generateurAurora1.0.exe" "release/generateurAurora1.0.exe"
+          cp "dist/lecteurAurora1.0.exe" "release/lecteurAurora1.0.exe"
+
+      - name: Préparer Linux
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          mkdir -p release
+          cp "dist/generateurAurora1.0" "release/generateurAurora1.0"
+          cp "dist/lecteurAurora1.0" "release/lecteurAurora1.0"
+          chmod +x "release/generateurAurora1.0"
+          chmod +x "release/lecteurAurora1.0"
+
+      - name: Préparer macOS
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          mkdir -p release
+          cp "dist/generateurAurora1.0" "release/generateurAurora1.0"
+          cp "dist/lecteurAurora1.0" "release/lecteurAurora1.0"
+          chmod +x "release/generateurAurora1.0"
+          chmod +x "release/lecteurAurora1.0"
+
+      - name: Créer le ZIP Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Compress-Archive `
+            -Path "release/*" `
+            -DestinationPath "Aurora-1.0-Windows.zip"
+
+      - name: Créer l'archive Linux
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          tar -czf Aurora-1.0-Linux.tar.gz -C release .
+
+      - name: Créer le ZIP macOS
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          zip -r Aurora-1.0-macOS.zip release/*
+
+      - name: Publier Windows
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Aurora-1.0-Windows
+          path: Aurora-1.0-Windows.zip
+
+      - name: Publier Linux
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Aurora-1.0-Linux
+          path: Aurora-1.0-Linux.tar.gz
+
+      - name: Publier macOS
+        if: runner.os == 'macOS'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Aurora-1.0-macOS
+          path: Aurora-1.0-macOS.zip
